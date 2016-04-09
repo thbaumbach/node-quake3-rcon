@@ -1,6 +1,6 @@
 # quake3-rcon
 
-> A tiny library for using Quake 3's RCON server feature, including command-line interface.
+> A tiny library for using Quake 3's RCON server feature, including an command-line interface.
 
 `quake3-rcon` lets you send rcon commands to your Quake 3 server. You can use it as a library for your project or as an interface to access your server from your command-line.
 
