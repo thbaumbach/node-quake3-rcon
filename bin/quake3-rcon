@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+
+/*
+ * quake3-rcon
+ *
+ * Copyright (c) 2016 Thomas Baumbach tom@xolo.pw
+ *
+ * Licensed under the MIT License
+ */
+
+require('../src/cli');
