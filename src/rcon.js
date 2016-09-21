@@ -6,9 +6,9 @@ var udp = require('dgram');
  * @param _DATA
  * @param {string} _DATA.address - server address
  * @param {string} _DATA.password - server password
- * @param {number} _DATA.port - server rcon port number [optional] [default: 27960]
- * @param {number} _DATA.timeout - socket listen timeout in milliseconds [optional] [default: 1500]
- * @param {boolean} _DATA.debug - dis/enable debug [optional] [default: false]
+ * @param {number|undefined} _DATA.port - server rcon port number [optional] [default: 27960]
+ * @param {number|undefined} _DATA.timeout - socket listen timeout in milliseconds [optional] [default: 1500]
+ * @param {boolean|undefined} _DATA.debug - dis/enable debug [optional] [default: false]
  * @returns {{send: send}}
  * @constructor
  */
@@ -124,8 +124,8 @@ var RCon = function (_DATA) {
     /**
      * Send command to Server
      * @param {string} _command - command string to send to server
-     * @param {function} _onSendCallback [optional] - callback to process server response
-     * @param {number} _timeoutMilliSecs [optional][default: 1500] - response timeout on udp socket in milliseconds
+     * @param {function|undefined} _onSendCallback [optional] - callback to process server response
+     * @param {number|undefined} _timeoutMilliSecs [optional][default: 1500] - response timeout on udp socket in milliseconds
      */
     var send = function (_command, _onSendCallback, _timeoutMilliSecs) {
 

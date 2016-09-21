@@ -2,11 +2,11 @@ try {
     // initialize the RCon object
     var Q3RCon = require('./rcon');
     var DATA = {
-        address: process.argv[2],
-        password: process.argv[3]
+        address: process.argv[2].toString(),
+        password: process.argv[3].toString()
     };
     if (process.argv.length > 2) {
-        DATA.port = process.argv[4];
+        DATA.port = parseInt(process.argv[4]);
     }
     var rcon = new Q3RCon(DATA);
 
