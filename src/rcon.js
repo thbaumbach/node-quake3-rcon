@@ -20,96 +20,106 @@ var RCon = function (_DATA) {
     // set defaults when required
     DATA.port = DATA.port || 27960;
     DATA.timeout = DATA.timeout || 1500;
+    DATA.debug = DATA.debug || false;
+
+    /**
+     * check if val is of type function
+     * @param val
+     * @returns {boolean}
+     */
+    function isFunction(val) {
+        return (typeof val === 'function');
+    }
 
     /**
      * check if type of val is string and size/length > 0
      * @param val
      */
-    var commonChecks = function (val) {
-        if (typeof val !== 'string') {
-            throw 'type is not string';
+    function commonChecks(val) {
+        if (typeof val === 'string') {
+            throw 'type is not a string';
         }
         if (val.length < 1) {
             throw 'length smaller or equals zero';
         }
-    };
+    }
 
     /**
      * do checks on Address
      * @param val
      */
-    var checkAddress = function (val) {
+    function checkAddress(val) {
         try {
             commonChecks(val);
         } catch (e) {
-            throw e.message + ' for address';
+            throw 'address ' + e.message;
         }
-    };
+    }
 
     /**
      * do checks on password
      * @param val
      */
-    var checkPassword = function (val) {
+    function checkPassword(val) {
         try {
             commonChecks(val);
         } catch (e) {
-            throw e.message + ' for password';
+            throw 'password ' + e.message;
         }
-    };
+    }
 
     /**
      * commen checks for a positiv number
      * @param val
      */
-    var checkPositivNumber = function (val) {
+    function checkPositivNumber(val) {
         var tmp = parseInt(val);
         if (isNaN(tmp)) {
-            throw 'port is not a number ';
+            throw 'not a number';
         }
         if (tmp < 0) {
-            throw 'port can not be negative';
+            throw 'number not positiv';
         }
-    };
+    }
 
     /**
      * do checks on port
      * @param val
      */
-    var checkPort = function (val) {
+    function checkPort(val) {
         try {
             checkPositivNumber(val);
         } catch (e) {
-            throw e.message + ' for port';
+            throw 'port ' + e.message;
         }
-    };
+    }
 
     /**
      * do checks on timeout
      * @param val
      */
-    var checkTimeout = function (val) {
+    function checkTimeout(val) {
         try {
             checkPositivNumber(val);
         } catch (e) {
-            throw e.message + ' for timeout';
+            throw 'timeout ' + e.message;
         }
         if (val < 500) {
-            throw 'timeout bellow 500 milliseconds not allowed';
+            throw 'timeout below 500 milliseconds';
         }
-    };
+    }
 
     /**
      * do checks on command
      * @param val
      */
-    var checkCommand = function (val) {
+    function checkCommand(val) {
         try {
             commonChecks(val);
         } catch (e) {
-            throw e.message + ' for command';
+            throw 'command ' + e.message;
         }
-    };
+    }
 
     /**
      * Send command to Server
@@ -134,6 +144,7 @@ var RCon = function (_DATA) {
         }
 
         checkCommand(command);
+        checkTimeout(timeoutMilliSecs);
 
         try {
             buffer = new Buffer(11 + DATA.password.length + command.length); // 4 + 5 + 1 + 1
@@ -149,15 +160,13 @@ var RCon = function (_DATA) {
         }
 
         if (DATA.debug === true) {
-            console.debug(DATA);
-            console.debug('sending command "' + command + '"'
+            console.log('sending command "' + command + '"'
                 + ' to address "' + DATA.address + '"'
                 + ' on port "' + DATA.port + '"'
                 + ' using password "' + DATA.password + '"'
-                + ' Buffer(' + buffer.toString('ascii').slice(4, -1) + ')'
+                + ' Buffer("' + buffer.toString('ascii').slice(4, -1) + '")'
             );
         }
-
 
         /**
          * Event Callbacks
@@ -168,7 +177,7 @@ var RCon = function (_DATA) {
          * converts it to an ascii String and appends it to the "messageBuffer"
          * @param message
          */
-        var onMessage = function (message /*, rinfo */) {
+        function onMessage(message /*, rinfo */) {
             // stop timeout
             clearTimeout(timerId);
             // append message
@@ -181,36 +190,35 @@ var RCon = function (_DATA) {
             timerId = setTimeout(function () {
                 connection.close();
             }, timeoutMilliSecs);
-        };
+        }
 
         /**
          * Returns accumulated "messageBuffer"
          * when the connection is closed
          */
-        var onClose = function () {
-            if (typeof onSendCallback === 'function') {
-                onSendCallback.call(null, messageBuffer);
-            }
-        };
+        function onClose() {
+            onSendCallback.call(null, messageBuffer);
+        }
 
         /**
          * reporting DNS errors or for determining when it is
          * safe to reuse the buffer
-         * @param {error} e
+         * @param {error} err
          */
-        var onSend = function (e) {
+        function onSend(err) {
             // close connection when no callback is available
-            if (typeof onSendCallback !== 'function') {
+            if (isFunction(onSendCallback)) {
                 connection.close();
             }
-            // TODO: handled/caught?
-            if (e) {
-                throw e;
+            // TODO: handled/catch?
+            if (err) {
+                connection.close();
+                throw err;
             }
-        };
+        }
 
         // register callbacks
-        if (typeof onSendCallback === 'function') {
+        if (isFunction(onSendCallback)) {
             connection.on('message', onMessage);
             connection.on('close', onClose);
         }
@@ -225,6 +233,11 @@ var RCon = function (_DATA) {
     checkPassword(DATA.password);
     checkPort(DATA.port);
     checkTimeout(DATA.timeout);
+
+    // output init data
+    if (DATA.debug === true) {
+        console.log(DATA);
+    }
 
     // external Interface
     return {
