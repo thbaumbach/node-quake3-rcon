@@ -36,7 +36,7 @@ var RCon = function (_DATA) {
      * @param val
      */
     function commonChecks(val) {
-        if (typeof val === 'string') {
+        if (typeof val != 'string') {
             throw 'type is not a string';
         }
         if (val.length < 1) {
@@ -52,7 +52,7 @@ var RCon = function (_DATA) {
         try {
             commonChecks(val);
         } catch (e) {
-            throw 'address ' + e.message;
+            throw 'address ' + e;
         }
     }
 
@@ -64,21 +64,21 @@ var RCon = function (_DATA) {
         try {
             commonChecks(val);
         } catch (e) {
-            throw 'password ' + e.message;
+            throw 'password ' + e;
         }
     }
 
     /**
-     * commen checks for a positiv number
+     * commen checks for a positive number
      * @param val
      */
-    function checkPositivNumber(val) {
+    function checkPositiveNumber(val) {
         var tmp = parseInt(val);
         if (isNaN(tmp)) {
             throw 'not a number';
         }
         if (tmp < 0) {
-            throw 'number not positiv';
+            throw 'number not positive';
         }
     }
 
@@ -88,9 +88,9 @@ var RCon = function (_DATA) {
      */
     function checkPort(val) {
         try {
-            checkPositivNumber(val);
+            checkPositiveNumber(val);
         } catch (e) {
-            throw 'port ' + e.message;
+            throw 'port ' + e;
         }
     }
 
@@ -100,9 +100,9 @@ var RCon = function (_DATA) {
      */
     function checkTimeout(val) {
         try {
-            checkPositivNumber(val);
+            checkPositiveNumber(val);
         } catch (e) {
-            throw 'timeout ' + e.message;
+            throw 'timeout ' + e;
         }
         if (val < 500) {
             throw 'timeout below 500 milliseconds';
@@ -117,7 +117,7 @@ var RCon = function (_DATA) {
         try {
             commonChecks(val);
         } catch (e) {
-            throw 'command ' + e.message;
+            throw 'command ' + e;
         }
     }
 
@@ -139,8 +139,8 @@ var RCon = function (_DATA) {
 
         try {
             connection = udp.createSocket('udp4');
-        } catch (err) {
-            throw 'failed to create udp4 socket';
+        } catch (e) {
+            throw 'failed to create udp4 socket: ' + e;
         }
 
         checkCommand(command);
@@ -156,7 +156,7 @@ var RCon = function (_DATA) {
             buffer.write(command, 10 + DATA.password.length, command.length);
             buffer.write('\n', 10 + DATA.password.length + command.length, 1);
         } catch (e) {
-            throw 'failed to prepare send buffer';
+            throw 'failed to prepare send buffer: ' + e;
         }
 
         if (DATA.debug === true) {
@@ -184,7 +184,7 @@ var RCon = function (_DATA) {
             try {
                 messageBuffer = messageBuffer + message.toString('ascii').slice(4).trim();
             } catch (e) {
-                throw 'failed to append to messageBuffer';
+                throw 'failed to append to messageBuffer: ' + e;
             }
             // start timeout
             timerId = setTimeout(function () {
@@ -203,17 +203,17 @@ var RCon = function (_DATA) {
         /**
          * reporting DNS errors or for determining when it is
          * safe to reuse the buffer
-         * @param {error} err
+         * @param {error} error
          */
-        function onSend(err) {
+        function onSend(error) {
             // close connection when no callback is available
             if (isFunction(onSendCallback)) {
                 connection.close();
             }
             // TODO: handled/catch?
-            if (err) {
+            if (error) {
                 connection.close();
-                throw err;
+                throw error;
             }
         }
 
@@ -247,5 +247,3 @@ var RCon = function (_DATA) {
 
 // export as module
 module.exports = RCon;
-
-
