@@ -25,7 +25,7 @@ $ npm install --save quake3-rcon
 run:
 
 ```sh
-$ quake3-rcon <server-address[:port]> <rcon-password>
+$ quake3-rcon <server-address> <rcon-password> [<server-port>]
 ```
 
 and then type in your commands for the server, e.g. `say Hi` or `addbot Sarge`.

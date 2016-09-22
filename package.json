@@ -1,6 +1,6 @@
 {
   "name": "quake3-rcon",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A tiny library for using Quake 3's RCON server feature, including an command-line interface.",
   "homepage": "https://github.com/thbaumbach/node-quake3-rcon",
   "readmeFilename": "README.md",
