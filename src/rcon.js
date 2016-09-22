@@ -3,24 +3,24 @@ var udp = require('dgram');
 
 /**
  * Create RCON Connection to a Quake3 Server
- * @param _DATA
- * @param {string} _DATA.address - server address
- * @param {string} _DATA.password - server password
- * @param {number|undefined} _DATA.port - server rcon port number [optional] [default: 27960]
- * @param {number|undefined} _DATA.timeout - socket listen timeout in milliseconds [optional] [default: 1500]
- * @param {boolean|undefined} _DATA.debug - dis/enable debug [optional] [default: false]
+ * @param _CONFIG
+ * @param {string} _CONFIG.address - server address
+ * @param {string} _CONFIG.password - server password
+ * @param {number|undefined} _CONFIG.port - server rcon port number [optional] [default: 27960]
+ * @param {number|undefined} _CONFIG.timeout - socket listen timeout in milliseconds [optional] [default: 1500]
+ * @param {boolean|undefined} _CONFIG.debug - dis/enable debug [optional] [default: false]
  * @returns {{send: send}}
  * @constructor
  */
-var RCon = function (_DATA) {
+var RCon = function (_CONFIG) {
 
 
-    var DATA = _DATA;
+    var CONFIG = _CONFIG;
 
     // set defaults when required
-    DATA.port = DATA.port || 27960;
-    DATA.timeout = DATA.timeout || 1500;
-    DATA.debug = DATA.debug || false;
+    CONFIG.port = CONFIG.port || 27960;
+    CONFIG.timeout = CONFIG.timeout || 1500;
+    CONFIG.debug = CONFIG.debug || false;
 
     /**
      * check if val is of type function
@@ -130,8 +130,8 @@ var RCon = function (_DATA) {
     var send = function (_command, _onSendCallback, _timeoutMilliSecs) {
 
         var timerId;
-        var messageBuffer = '';
-        var timeoutMilliSecs = _timeoutMilliSecs || DATA.timeout || 1500; // 1.5 secs
+        var responseBuffer = '';
+        var timeoutMilliSecs = _timeoutMilliSecs || CONFIG.timeout || 1500; // 1.5 secs
         var command = _command;
         var onSendCallback = _onSendCallback;
         var connection;
@@ -147,23 +147,23 @@ var RCon = function (_DATA) {
         checkTimeout(timeoutMilliSecs);
 
         try {
-            buffer = new Buffer(11 + DATA.password.length + command.length); // 4 + 5 + 1 + 1
+            buffer = new Buffer(11 + CONFIG.password.length + command.length); // 4 + 5 + 1 + 1
             // fill the buffer
             buffer.writeUInt32LE(0xFFFFFFFF, 0); // magic code
             buffer.write('rcon ', 4);
-            buffer.write(DATA.password, 9, DATA.password.length);
-            buffer.write(' ', 9 + DATA.password.length, 1);
-            buffer.write(command, 10 + DATA.password.length, command.length);
-            buffer.write('\n', 10 + DATA.password.length + command.length, 1);
+            buffer.write(CONFIG.password, 9, CONFIG.password.length);
+            buffer.write(' ', 9 + CONFIG.password.length, 1);
+            buffer.write(command, 10 + CONFIG.password.length, command.length);
+            buffer.write('\n', 10 + CONFIG.password.length + command.length, 1);
         } catch (e) {
             throw 'failed to prepare send buffer: ' + e;
         }
 
-        if (DATA.debug === true) {
+        if (CONFIG.debug === true) {
             console.log('sending command "' + command + '"'
-                + ' to address "' + DATA.address + '"'
-                + ' on port "' + DATA.port + '"'
-                + ' using password "' + DATA.password + '"'
+                + ' to address "' + CONFIG.address + '"'
+                + ' on port "' + CONFIG.port + '"'
+                + ' using password "' + CONFIG.password + '"'
                 + ' Buffer("' + buffer.toString('ascii').slice(4, -1) + '")'
             );
         }
@@ -174,7 +174,7 @@ var RCon = function (_DATA) {
 
         /**
          * Processes one incoming UDP Package from the Server
-         * converts it to an ascii String and appends it to the "messageBuffer"
+         * converts it to an ascii String and appends it to the "responseBuffer"
          * @param message
          */
         function onMessage(message /*, rinfo */) {
@@ -182,9 +182,9 @@ var RCon = function (_DATA) {
             clearTimeout(timerId);
             // append message
             try {
-                messageBuffer = messageBuffer + message.toString('ascii').slice(4).trim();
+                responseBuffer += message.toString('ascii').slice(4).trim();
             } catch (e) {
-                throw 'failed to append to messageBuffer: ' + e;
+                throw 'failed to append to responseBuffer: ' + e;
             }
             // start timeout
             timerId = setTimeout(function () {
@@ -193,11 +193,11 @@ var RCon = function (_DATA) {
         }
 
         /**
-         * Returns accumulated "messageBuffer"
+         * Returns accumulated "responseBuffer"
          * when the connection is closed
          */
         function onClose() {
-            onSendCallback.call(null, messageBuffer);
+            onSendCallback.call(null, responseBuffer);
         }
 
         /**
@@ -207,7 +207,7 @@ var RCon = function (_DATA) {
          */
         function onSend(error) {
             // close connection when no callback is available
-            if (isFunction(onSendCallback)) {
+            if (!isFunction(onSendCallback)) {
                 connection.close();
             }
             // TODO: handled/catch?
@@ -223,20 +223,18 @@ var RCon = function (_DATA) {
             connection.on('close', onClose);
         }
         // and finally send the command
-        connection.send(buffer, 0, buffer.length, DATA.port, DATA.address, onSend);
+        connection.send(buffer, 0, buffer.length, CONFIG.port, CONFIG.address, onSend);
     };
 
-    //
-
-    // check DATA
-    checkAddress(DATA.address);
-    checkPassword(DATA.password);
-    checkPort(DATA.port);
-    checkTimeout(DATA.timeout);
+    // check CONFIG
+    checkAddress(CONFIG.address);
+    checkPassword(CONFIG.password);
+    checkPort(CONFIG.port);
+    checkTimeout(CONFIG.timeout);
 
     // output init data
-    if (DATA.debug === true) {
-        console.log(DATA);
+    if (CONFIG.debug === true) {
+        console.log(CONFIG);
     }
 
     // external Interface
