@@ -6,8 +6,7 @@ try {
     var Q3RCon = require('./rcon');
     var CONFIG = {
         address: process.argv[2].toString(),
-        password: process.argv[3].toString(),
-        debug: true
+        password: process.argv[3].toString()
     };
     if (process.argv.length === 5) {
         CONFIG.port = parseInt(process.argv[4]);

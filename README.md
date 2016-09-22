@@ -39,13 +39,18 @@ var Q3RCon = require('quake3-rcon');
 Initialize the `quake3-rcon` object:
 
 ```
-var rcon = new Q3RCon('server:port', 'password');
+var rcon = new Q3RCon({
+    address: '127.0.0.1',
+    port: 27960, // optional
+    password: 'my_super_secret_password',
+    debug: true // optional
+});
 ```
 
 Send a command to the server:
 
 ```
-rcon.send('rcon_command param1 param2 ...', function(message) {
+rcon.send('rcon_command param1 param2 ...', function(response) {
     // this callback is optional
 });
 ```
@@ -55,10 +60,13 @@ rcon.send('rcon_command param1 param2 ...', function(message) {
 ```
 var Q3RCon = require('quake3-rcon');
 
-var rcon = new Q3RCon('127.0.0.1:27960', 'my_super_secret_password');
+var rcon = new Q3RCon({
+    address: '127.0.0.1',
+    password: 'my_super_secret_password'
+});
 
-rcon.send('say Hello, World!', function(message) {
-    console.log(message.toString('ascii').slice(4).trim());
+rcon.send('say Hello, World!', function(response) {
+    console.log(response);
 });
 ```
 
