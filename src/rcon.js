@@ -129,7 +129,7 @@ var RCon = function (_CONFIG) {
      */
     var send = function (_command, _onSendCallback, _timeoutMilliSecs) {
 
-        var timerId;
+        var connectTimeout, msgTimeout;
         var responseBuffer = '';
         var timeoutMilliSecs = _timeoutMilliSecs || CONFIG.timeout || 1500; // 1.5 secs
         var command = _command;
@@ -178,8 +178,9 @@ var RCon = function (_CONFIG) {
          * @param message
          */
         function onMessage(message /*, rinfo */) {
-            // stop timeout
-            clearTimeout(timerId);
+            // stop timeouts
+            clearTimeout(connectTimeout);
+            clearTimeout(msgTimeout);
             // append message
             try {
                 responseBuffer += message.toString('ascii').slice(4).trim();
@@ -187,7 +188,7 @@ var RCon = function (_CONFIG) {
                 throw 'failed to append to responseBuffer: ' + e;
             }
             // start timeout
-            timerId = setTimeout(function () {
+            msgTimeout = setTimeout(function () {
                 connection.close();
             }, timeoutMilliSecs);
         }
@@ -224,6 +225,10 @@ var RCon = function (_CONFIG) {
         }
         // and finally send the command
         connection.send(buffer, 0, buffer.length, CONFIG.port, CONFIG.address, onSend);
+        connectTimeout = setTimeout(function () {
+            connection.close();
+            throw new Error('connection.send TIMEOUT');
+        }, timeoutMilliSecs);
     };
 
     // check CONFIG
