@@ -1,5 +1,5 @@
 //
-var udp = require('dgram');
+const udp = require('dgram');
 
 /**
  * Create RCON Connection to a Quake3 Server
@@ -12,10 +12,9 @@ var udp = require('dgram');
  * @returns {{send: send}}
  * @constructor
  */
-var RCon = function (_CONFIG) {
+const RCon = function (_CONFIG) {
 
-
-    var CONFIG = _CONFIG;
+    const CONFIG = _CONFIG;
 
     // set defaults when required
     CONFIG.port = CONFIG.port || 27960;
@@ -27,7 +26,7 @@ var RCon = function (_CONFIG) {
      * @param val
      * @returns {boolean}
      */
-    function isFunction(val) {
+    const isFunction = (val) => {
         return (typeof val === 'function');
     }
 
@@ -35,7 +34,7 @@ var RCon = function (_CONFIG) {
      * check if type of val is string and size/length > 0
      * @param val
      */
-    function commonChecks(val) {
+    commonChecks = (val) => {
         if (typeof val != 'string') {
             throw 'type is not a string';
         }
@@ -48,7 +47,7 @@ var RCon = function (_CONFIG) {
      * do checks on Address
      * @param val
      */
-    function checkAddress(val) {
+    checkAddress = (val) => {
         try {
             commonChecks(val);
         } catch (e) {
@@ -60,7 +59,7 @@ var RCon = function (_CONFIG) {
      * do checks on password
      * @param val
      */
-    function checkPassword(val) {
+    checkPassword = (val) => {
         try {
             commonChecks(val);
         } catch (e) {
@@ -72,8 +71,8 @@ var RCon = function (_CONFIG) {
      * commen checks for a positive number
      * @param val
      */
-    function checkPositiveNumber(val) {
-        var tmp = parseInt(val);
+    checkPositiveNumber = (val) => {
+        const tmp = parseInt(val);
         if (isNaN(tmp)) {
             throw 'not a number';
         }
@@ -86,7 +85,7 @@ var RCon = function (_CONFIG) {
      * do checks on port
      * @param val
      */
-    function checkPort(val) {
+    checkPort = (val) => {
         try {
             checkPositiveNumber(val);
         } catch (e) {
@@ -98,7 +97,7 @@ var RCon = function (_CONFIG) {
      * do checks on timeout
      * @param val
      */
-    function checkTimeout(val) {
+    checkTimeout = (val) => {
         try {
             checkPositiveNumber(val);
         } catch (e) {
@@ -113,7 +112,7 @@ var RCon = function (_CONFIG) {
      * do checks on command
      * @param val
      */
-    function checkCommand(val) {
+    checkCommand = (val) => {
         try {
             commonChecks(val);
         } catch (e) {
@@ -127,15 +126,15 @@ var RCon = function (_CONFIG) {
      * @param {function|undefined} _onSendCallback [optional] - callback to process server response
      * @param {number|undefined} _timeoutMilliSecs [optional][default: 1500] - response timeout on udp socket in milliseconds
      */
-    var send = function (_command, _onSendCallback, _timeoutMilliSecs) {
+    const send = (_command, _onSendCallback, _timeoutMilliSecs) => {
 
-        var connectTimeout, msgTimeout;
-        var responseBuffer = '';
-        var timeoutMilliSecs = _timeoutMilliSecs || CONFIG.timeout || 1500; // 1.5 secs
-        var command = _command;
-        var onSendCallback = _onSendCallback;
-        var connection;
-        var buffer;
+        const timeoutMilliSecs = _timeoutMilliSecs || CONFIG.timeout || 1500; // 1.5 secs
+        const command = _command;
+        const onSendCallback = _onSendCallback;
+        let connectTimeout, msgTimeout;
+        let responseBuffer = '';
+        let connection = null;
+        let buffer = null;
 
         try {
             connection = udp.createSocket('udp4');
@@ -147,7 +146,7 @@ var RCon = function (_CONFIG) {
         checkTimeout(timeoutMilliSecs);
 
         try {
-            buffer = new Buffer(11 + CONFIG.password.length + command.length); // 4 + 5 + 1 + 1
+            buffer = Buffer.alloc(11 + CONFIG.password.length + command.length); // 4 + 5 + 1 + 1
             // fill the buffer
             buffer.writeUInt32LE(0xFFFFFFFF, 0); // magic code
             buffer.write('rcon ', 4);
@@ -177,7 +176,7 @@ var RCon = function (_CONFIG) {
          * converts it to an ascii String and appends it to the "responseBuffer"
          * @param message
          */
-        function onMessage(message /*, rinfo */) {
+        const onMessage = (message /*, rinfo */) => {
             // stop timeouts
             clearTimeout(connectTimeout);
             clearTimeout(msgTimeout);
@@ -188,7 +187,7 @@ var RCon = function (_CONFIG) {
                 throw 'failed to append to responseBuffer: ' + e;
             }
             // start timeout
-            msgTimeout = setTimeout(function () {
+            msgTimeout = setTimeout(() => {
                 connection.close();
             }, timeoutMilliSecs);
         }
@@ -197,7 +196,7 @@ var RCon = function (_CONFIG) {
          * Returns accumulated "responseBuffer"
          * when the connection is closed
          */
-        function onClose() {
+        const onClose = () => {
             onSendCallback.call(null, responseBuffer);
         }
 
@@ -206,12 +205,12 @@ var RCon = function (_CONFIG) {
          * safe to reuse the buffer
          * @param {error} error
          */
-        function onSend(error) {
+        const onSend = (error) => {
             // close connection when no callback is available
             if (!isFunction(onSendCallback)) {
                 connection.close();
             }
-            // TODO: handled/catch?
+            // TODO: handle/catch?
             if (error) {
                 connection.close();
                 throw error;
@@ -225,9 +224,9 @@ var RCon = function (_CONFIG) {
         }
 
         // setup check for timeout
-        connectTimeout = setTimeout(function () {
+        connectTimeout = setTimeout(() => {
             connection.close();
-            throw new Error('connection.send TIMEOUT');
+            throw 'connection.send TIMEOUT';
         }, timeoutMilliSecs);
 
         // and finally send the command

@@ -1,6 +1,6 @@
 # quake3-rcon
 
-> A tiny library for using Quake 3's RCON server feature, including an command-line interface.
+> A tiny library for using Quake 3's RCON server feature, including an command-line interface. Dependency-free.
 
 `quake3-rcon` lets you send rcon commands to your Quake 3 server. You can use it as a library for your project or as an interface to access your server from your command-line.
 
@@ -18,7 +18,7 @@ or install `quake3-rcon` as a dependency for your package:
 $ npm install --save quake3-rcon
 ```
 
-`quake3-rcon` depends on [Node.js](https://nodejs.org/). Tested with `node v4.3.0`.
+`quake3-rcon` depends on [Node.js](https://nodejs.org/). Tested with `node v12.16`.
 
 ## Usage: command-line interface
 
@@ -50,7 +50,7 @@ var rcon = new Q3RCon({
 Send a command to the server:
 
 ```
-rcon.send('rcon_command param1 param2 ...', function(response) {
+rcon.send('rcon_command param1 param2 ...', (response) => {
     // this callback is optional
 });
 ```
@@ -65,7 +65,7 @@ var rcon = new Q3RCon({
     password: 'my_super_secret_password'
 });
 
-rcon.send('say Hello, World!', function(response) {
+rcon.send('say Hello, World!', (response) => {
     console.log(response);
 });
 ```

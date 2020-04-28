@@ -1,10 +1,11 @@
 {
   "name": "quake3-rcon",
-  "version": "0.2.2",
+  "version": "1.0.2",
   "description": "A tiny library for using Quake 3's RCON server feature, including an command-line interface.",
   "homepage": "https://github.com/thbaumbach/node-quake3-rcon",
   "readmeFilename": "README.md",
   "scripts": {
+    "start": "node ./bin/quake3-rcon",
     "test": "echo no tests yet"
   },
   "preferGlobal": true,
@@ -16,14 +17,13 @@
     "lib": "src"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/thbaumbach/node-quake3-rcon"
+    "type": "git",
+    "url": "https://github.com/thbaumbach/node-quake3-rcon"
   },
   "bugs": {
     "url": "https://github.com/thbaumbach/node-quake3-rcon/issues"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "keywords": [
     "quake",
     "quake3",

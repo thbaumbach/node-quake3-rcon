@@ -2,14 +2,14 @@
  * minimal example 
  */
 
-var Q3RCon = require('quake3-rcon');
+const Q3RCon = require('quake3-rcon');
 
-var rcon = new Q3RCon({
+const rcon = new Q3RCon({
     address: '127.0.0.1', 
-    password: 'my_super_secret_password'
+    password: 'my_super_secret_password',
     /*port:  27960*/
 });
 
-rcon.send('say Hello, World!', function (message) {
+rcon.send('say Hello, World!', (message) => {
     console.log(message);
 });

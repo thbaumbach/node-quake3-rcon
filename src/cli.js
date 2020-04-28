@@ -3,27 +3,27 @@ try {
         throw null;
 
     // initialize the RCon object
-    var Q3RCon = require('./rcon');
-    var CONFIG = {
+    const Q3RCon = require('./rcon');
+    const CONFIG = {
         address: process.argv[2].toString(),
         password: process.argv[3].toString()
     };
     if (process.argv.length === 5) {
         CONFIG.port = parseInt(process.argv[4]);
     }
-    var rcon = new Q3RCon(CONFIG);
+    const rcon = new Q3RCon(CONFIG);
 
     // hook up stdin for the user input
-    var stdin = process.openStdin();
+    const stdin = process.openStdin();
     console.log('initialized. write your rcon commands here (send by pressing Enter):');
-    stdin.addListener('data', function (data) {
+    stdin.addListener('data', (data) => {
         try {
             rcon.send(data.toString().trim(),
                 /**
                  * message handler for server messages
                  * @param message
                  */
-                function (message) {
+                (message) => {
                     console.log('server: ' + message);
                 }
             );
