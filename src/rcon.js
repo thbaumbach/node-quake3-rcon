@@ -223,12 +223,15 @@ var RCon = function (_CONFIG) {
             connection.on('message', onMessage);
             connection.on('close', onClose);
         }
-        // and finally send the command
-        connection.send(buffer, 0, buffer.length, CONFIG.port, CONFIG.address, onSend);
+
+        // setup check for timeout
         connectTimeout = setTimeout(function () {
             connection.close();
             throw new Error('connection.send TIMEOUT');
         }, timeoutMilliSecs);
+
+        // and finally send the command
+        connection.send(buffer, 0, buffer.length, CONFIG.port, CONFIG.address, onSend);
     };
 
     // check CONFIG
