@@ -127,110 +127,117 @@ const RCon = function (_CONFIG) {
      * @param {number|undefined} _timeoutMilliSecs [optional][default: 1500] - response timeout on udp socket in milliseconds
      */
     const send = (_command, _onSendCallback, _timeoutMilliSecs) => {
+        return new Promise((resolve, reject) => {
+            const timeoutMilliSecs = _timeoutMilliSecs || CONFIG.timeout || 1500; // 1.5 secs
+            const command = _command;
+            const onSendCallback = _onSendCallback;
+            let connectTimeout, msgTimeout;
+            let responseBuffer = '';
+            let connection = null;
+            let buffer = null;
 
-        const timeoutMilliSecs = _timeoutMilliSecs || CONFIG.timeout || 1500; // 1.5 secs
-        const command = _command;
-        const onSendCallback = _onSendCallback;
-        let connectTimeout, msgTimeout;
-        let responseBuffer = '';
-        let connection = null;
-        let buffer = null;
-
-        try {
-            connection = udp.createSocket('udp4');
-        } catch (e) {
-            throw 'failed to create udp4 socket: ' + e;
-        }
-
-        checkCommand(command);
-        checkTimeout(timeoutMilliSecs);
-
-        try {
-            buffer = Buffer.alloc(11 + CONFIG.password.length + command.length); // 4 + 5 + 1 + 1
-            // fill the buffer
-            buffer.writeUInt32LE(0xFFFFFFFF, 0); // magic code
-            buffer.write('rcon ', 4);
-            buffer.write(CONFIG.password, 9, CONFIG.password.length);
-            buffer.write(' ', 9 + CONFIG.password.length, 1);
-            buffer.write(command, 10 + CONFIG.password.length, command.length);
-            buffer.write('\n', 10 + CONFIG.password.length + command.length, 1);
-        } catch (e) {
-            throw 'failed to prepare send buffer: ' + e;
-        }
-
-        if (CONFIG.debug === true) {
-            console.log('sending command "' + command + '"'
-                + ' to address "' + CONFIG.address + '"'
-                + ' on port "' + CONFIG.port + '"'
-                + ' using password "' + CONFIG.password + '"'
-                + ' Buffer("' + buffer.toString('ascii').slice(4, -1) + '")'
-            );
-        }
-
-        /**
-         * Event Callbacks
-         */
-
-        /**
-         * Processes one incoming UDP Package from the Server
-         * converts it to an ascii String and appends it to the "responseBuffer"
-         * @param message
-         */
-        const onMessage = (message /*, rinfo */) => {
-            // stop timeouts
-            clearTimeout(connectTimeout);
-            clearTimeout(msgTimeout);
-            // append message
             try {
-                responseBuffer += message.toString('ascii').slice(4).trim();
+                connection = udp.createSocket('udp4');
             } catch (e) {
-                throw 'failed to append to responseBuffer: ' + e;
+                reject ('failed to create udp4 socket: ' + e);
             }
-            // start timeout
-            msgTimeout = setTimeout(() => {
+
+            checkCommand(command);
+            checkTimeout(timeoutMilliSecs);
+
+            try {
+                buffer = Buffer.alloc(11 + CONFIG.password.length + command.length); // 4 + 5 + 1 + 1
+                // fill the buffer
+                buffer.writeUInt32LE(0xFFFFFFFF, 0); // magic code
+                buffer.write('rcon ', 4);
+                buffer.write(CONFIG.password, 9, CONFIG.password.length);
+                buffer.write(' ', 9 + CONFIG.password.length, 1);
+                buffer.write(command, 10 + CONFIG.password.length, command.length);
+                buffer.write('\n', 10 + CONFIG.password.length + command.length, 1);
+            } catch (e) {
+                reject('failed to prepare send buffer: ' + e);
+            }
+
+            if (CONFIG.debug === true) {
+                console.log('sending command "' + command + '"'
+                    + ' to address "' + CONFIG.address + '"'
+                    + ' on port "' + CONFIG.port + '"'
+                    + ' using password "' + CONFIG.password + '"'
+                    + ' Buffer("' + buffer.toString('ascii').slice(4, -1) + '")'
+                );
+            }
+
+            /**
+             * Event Callbacks
+             */
+
+            /**
+             * Processes one incoming UDP Package from the Server
+             * converts it to an ascii String and appends it to the "responseBuffer"
+             * @param message
+             */
+            const onMessage = (message /*, rinfo */) => {
+                // stop timeouts
+                clearTimeout(connectTimeout);
+                clearTimeout(msgTimeout);
+                // append message
+                try {
+                    responseBuffer += message.toString('ascii').slice(4).trim();
+                } catch (e) {
+                    reject('failed to append to responseBuffer: ' + e);
+                }
+                // start timeout
+                msgTimeout = setTimeout(() => {
+                    connection.close();
+                }, timeoutMilliSecs);
+            }
+
+            /**
+             * Returns accumulated "responseBuffer"
+             * when the connection is closed
+             */
+            const onClose = () => {
+                if (responseBuffer == "") {
+                    reject("Undefined buffer");
+                }
+                else {
+                    onSendCallback.call(null, responseBuffer);
+                    resolve(responseBuffer);
+                }
+            }
+
+            /**
+             * reporting DNS errors or for determining when it is
+             * safe to reuse the buffer
+             * @param {error} error
+             */
+            const onSend = (error) => {
+                // close connection when no callback is available
+                if (!isFunction(onSendCallback)) {
+                    connection.close();
+                }
+                // TODO: handle/catch?
+                if (error) {
+                    connection.close();
+                    reject(error);
+                }
+            }
+
+            // register callbacks
+            if (isFunction(onSendCallback)) {
+                connection.on('message', onMessage);
+                connection.on('close', onClose);
+            }
+
+            // setup check for timeout
+            connectTimeout = setTimeout(() => {
                 connection.close();
+                reject('connection.send TIMEOUT');
             }, timeoutMilliSecs);
-        }
 
-        /**
-         * Returns accumulated "responseBuffer"
-         * when the connection is closed
-         */
-        const onClose = () => {
-            onSendCallback.call(null, responseBuffer);
-        }
-
-        /**
-         * reporting DNS errors or for determining when it is
-         * safe to reuse the buffer
-         * @param {error} error
-         */
-        const onSend = (error) => {
-            // close connection when no callback is available
-            if (!isFunction(onSendCallback)) {
-                connection.close();
-            }
-            // TODO: handle/catch?
-            if (error) {
-                connection.close();
-                throw error;
-            }
-        }
-
-        // register callbacks
-        if (isFunction(onSendCallback)) {
-            connection.on('message', onMessage);
-            connection.on('close', onClose);
-        }
-
-        // setup check for timeout
-        connectTimeout = setTimeout(() => {
-            connection.close();
-            throw 'connection.send TIMEOUT';
-        }, timeoutMilliSecs);
-
-        // and finally send the command
-        connection.send(buffer, 0, buffer.length, CONFIG.port, CONFIG.address, onSend);
+            // and finally send the command
+            connection.send(buffer, 0, buffer.length, CONFIG.port, CONFIG.address, onSend);
+        });
     };
 
     // check CONFIG
